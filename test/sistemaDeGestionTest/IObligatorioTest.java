@@ -900,6 +900,38 @@ public class IObligatorioTest {
     //ComprasXDia Test
     
     @Test
+    public void testComprasXDiaOK(){
+        miSistema.registrarSala("ATI71", 200);                
+        
+        miSistema.registrarEvento("ATI71", "Musica de camara", 200, LocalDate.of(2025, 6, 12));
+        miSistema.registrarEvento("KWI23", "Concierto Jazz Montevideo", 200, LocalDate.of(2025, 7, 12));
+        miSistema.registrarEvento("ALWJK", "Concierto Mahler 2", 200, LocalDate.of(2025, 2, 10));
+        miSistema.registrarEvento("FEK12", "Concierto Impresionismo", 200, LocalDate.of(2025, 2, 7));
+        miSistema.registrarEvento("AWLK2", "Charla Baudelaire", 200, LocalDate.of(2025, 3, 4));
+        miSistema.registrarEvento("ASJ23", "Lohengrin", 200, LocalDate.of(2025, 2, 27));
+        
+        miSistema.registrarCliente("58495053", "Sebastian");
+        miSistema.registrarCliente("57295841", "Luna");
+
+  
+        miSistema.comprarEntrada("58495053", "ATI71");
+        miSistema.comprarEntrada("57295841","ATI71");
+        miSistema.comprarEntrada("58495053", "KWI23");
+        miSistema.comprarEntrada("57295841","KWI23");
+        miSistema.comprarEntrada("58495053", "ALWJK");
+        miSistema.comprarEntrada("57295841","ALWJK");
+        miSistema.comprarEntrada("58495053", "FEK12");
+        miSistema.comprarEntrada("57295841","FEK12");
+        miSistema.comprarEntrada("58495053", "AWLK2");
+        miSistema.comprarEntrada("57295841","AWLK2");
+        miSistema.comprarEntrada("58495053", "ASJ23");
+        miSistema.comprarEntrada("57295841","ASJ23");
+        
+        Retorno r = miSistema.comprasXDia(2);
+            assertEquals("7-2#10-2#27-2", r.valorString);
+    }
+    
+    @Test
     public void testComprasXDiaOKVacio(){
         Retorno r = miSistema.comprasXDia(1);
             assertEquals(Retorno.Resultado.OK, r.resultado);

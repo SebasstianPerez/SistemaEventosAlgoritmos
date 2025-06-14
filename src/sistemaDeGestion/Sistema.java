@@ -18,12 +18,15 @@ public class Sistema implements IObligatorio {
     private ListaSimpleNodos<Evento> listaEvento;
     private ListaSimpleNodos<Cliente> listaCliente;
     private Pila<Entrada> pilaEntrada;
+    private int[][] cantComprasXMes;
+    
     
     public Sistema(){
         listaSala = new ListaSimpleNodos();
         listaEvento = new ListaSimpleNodos();
         listaCliente = new ListaSimpleNodos();
         pilaEntrada = new Pila();
+        cantComprasXMes = new int[12][31];
     }
     
     @Override
@@ -240,6 +243,8 @@ public class Sistema implements IObligatorio {
         evento.entradas.agregarFinal(entrada);
         cliente.entradas.agregarFinal(entrada);
         
+        cantComprasXMes[evento.Fecha.getMonthValue()-1][evento.Fecha.getDayOfMonth()-1]++;
+        
         pilaEntrada.push(entrada);
     }
 
@@ -268,7 +273,7 @@ public class Sistema implements IObligatorio {
         return Retorno.ok();
     }
     
-    private void asignarSiguenteColaEspera(Evento evento){
+    private void asignarSiguienteColaEspera(Evento evento){
         if(evento.colaEspera.verFrente() != null){
             Cliente cliente = getCliente(evento.colaEspera.verFrente().Cedula);
             asignarEntrada(cliente, evento);
@@ -299,11 +304,13 @@ public class Sistema implements IObligatorio {
         Entrada aBorrar = new Entrada(cliente.Cedula, evento.Codigo);
         cliente.entradas.eliminarElemento(aBorrar);
         evento.entradas.eliminarElemento(aBorrar);
+        cantComprasXMes[evento.Fecha.getMonthValue()-1][evento.Fecha.getDayOfMonth()-1]--;
+
         
         ret.valorString = "Se pudo devolver la entrada";
         ret.resultado = Retorno.ok().resultado;
         
-        asignarSiguenteColaEspera(evento);
+        asignarSiguienteColaEspera(evento);
         
         return ret;
         //Como la elimino de la pila?
@@ -553,15 +560,18 @@ public class Sistema implements IObligatorio {
 
                 cliente.entradas.eliminarFinal();
                 evento.entradas.eliminarFinal();
-                    
+                
+                cantComprasXMes[evento.Fecha.getMonthValue()-1][evento.Fecha.getDayOfMonth()-1]--;
+                
+                asignarSiguienteColaEspera(evento);
+                
                 if(!ret.valorString.isEmpty())
                     ret.valorString += "#";
-                    
-                ret.valorString += reg.codigoEvento + "-" + reg.cedulaCliente;                
+                
+                ret.valorString += reg.codigoEvento + "-" + reg.cedulaCliente;
             } else {
                 break;
             }
-            //TODO asignarSiguenteColaEspera
         }
         
         ret.resultado = Retorno.Resultado.OK;
@@ -571,8 +581,7 @@ public class Sistema implements IObligatorio {
         }
         
         
-        return ret;       
-        //TODO Revisar
+        return ret;
     }
 
     @Override
@@ -618,20 +627,21 @@ public class Sistema implements IObligatorio {
     public Retorno comprasXDia(int mes) {
         Retorno ret = new Retorno();
         
-        if(mes > 12 || mes < 0){
+        if(mes > 12 || mes <= 0){
             ret.resultado = Retorno.Resultado.ERROR_1;
             ret.valorString = "Mes invalido";
             
             return ret;
         }
         
-        int[][] comprasPorMes = {};
-        
-        for(int i = 0; i < comprasPorMes[mes].length; i++){
+        mes--;
+        for(int i = 0; i < cantComprasXMes[mes].length; i++){
+            if(cantComprasXMes[mes][i] == 0) continue;
+            
             if(ret.valorString == null){
-                ret.valorString = String.valueOf(i) + "-" + comprasPorMes[mes][i];
+                ret.valorString = String.valueOf(i+1) + "-" + cantComprasXMes[mes][i];
             } else {
-                ret.valorString = "#" + String.valueOf(i) + "-" + comprasPorMes[mes][i];
+                ret.valorString += "#" + String.valueOf(i+1) + "-" + cantComprasXMes[mes][i];
             }
         }
         
