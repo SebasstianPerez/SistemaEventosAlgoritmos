@@ -44,5 +44,4 @@ public class Cola<T extends Comparable> {
     public T verFrente(){
         return esVacia() ? null : inicio.getDato();
     }
-
 }

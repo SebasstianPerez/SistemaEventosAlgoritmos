@@ -69,4 +69,7 @@ public class Evento implements Comparable<Evento>{
         return (this.Codigo == null ? otro.Codigo == null : this.Codigo.equals(otro.Codigo));
         
     }
+    
+    //TODO sort colaEspera por cedula
+    
 }
