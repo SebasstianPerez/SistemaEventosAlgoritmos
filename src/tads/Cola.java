@@ -1,13 +1,17 @@
 package tads;
 
+import java.util.List;
+
 public class Cola<T extends Comparable> {
 
     private Nodo<T> inicio;
     private Nodo<T> fin;
+    public int cantElementos;
 
     public Cola() {
         inicio = null;
         fin = null;
+        cantElementos = 0;
     }
     
     public boolean esVacia(){
@@ -19,11 +23,12 @@ public class Cola<T extends Comparable> {
         
         if(esVacia()){
             inicio = nuevo;
-            fin = nuevo;
         }else{
             fin.setSiguiente(nuevo);
-            fin = nuevo;
         }
+        
+        fin = nuevo;
+        cantElementos++;
     }
     
     public T dequeue(){
@@ -36,6 +41,8 @@ public class Cola<T extends Comparable> {
         
         aBorrar.setSiguiente(null);
         
+        cantElementos--;
+        
         if(inicio == null) fin = null;
         
         return dato;
@@ -43,5 +50,17 @@ public class Cola<T extends Comparable> {
     
     public T verFrente(){
         return esVacia() ? null : inicio.getDato();
+    }
+    
+    public ListaSimpleNodos<T> getDatos(){
+        Nodo actual = inicio;
+        ListaSimpleNodos<T> ret = new ListaSimpleNodos();
+        
+        while(actual != null){
+            ret.agregarOrdenado((T) actual.getDato());
+            actual = actual.getSiguiente();
+        }
+        
+        return ret;
     }
 }

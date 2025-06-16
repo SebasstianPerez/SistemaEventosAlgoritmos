@@ -459,16 +459,66 @@ public class IObligatorioTest {
         r = miSistema.comprarEntrada("47625352", "ATI71");
             assertEquals(Retorno.ok().resultado, r.resultado);
             assertEquals("Agregado a cola de espera", r.valorString);
-        //TODO mostrar entradas
+        
+        r = miSistema.listarClientesDeEvento("ATI71", 3);
+            assertEquals("58743973-Luna#58495053-Sebastian", r.valorString);
+    }
+    
+    @Test
+    public void testListarEsperaEventoOK(){
+        miSistema.registrarSala("ATI71", 200);
+         
+        String codigoEvento = "ATI71"; 
+        
+        miSistema.registrarEvento(codigoEvento, "Musica de camara", 2, LocalDate.of(2025, 6, 12));
+        miSistema.registrarEvento("CJS23", "Concierto", 100, LocalDate.of(2025, 6, 11));
+
+        miSistema.registrarCliente("58495053", "Sebastian"); 
+        miSistema.registrarCliente("58743973", "Luna");
+        miSistema.registrarCliente("47625352", "Esteban");
+        miSistema.registrarCliente("12345678", "Juan");
+
+           
+        Retorno r = miSistema.comprarEntrada("58495053", "ATI71");
+            assertEquals(Retorno.ok().resultado, r.resultado);
+            assertEquals("Si se pudo comprar entrada", r.valorString);
+    
+        r = miSistema.comprarEntrada("58743973","ATI71");
+            assertEquals(Retorno.ok().resultado, r.resultado);
+            assertEquals("Si se pudo comprar entrada", r.valorString);
+           
+        r = miSistema.comprarEntrada("47625352", "ATI71");
+            assertEquals(Retorno.ok().resultado, r.resultado);
+            assertEquals("Agregado a cola de espera", r.valorString);
+            
+        r = miSistema.comprarEntrada("12345678", "ATI71");
+            assertEquals(Retorno.ok().resultado, r.resultado);
+            assertEquals("Agregado a cola de espera", r.valorString); 
+        
+            
+        r = miSistema.listarEsperaEvento();
+            assertEquals("ATI71-12345678#ATI71-47625352", r.valorString);
+            assertEquals(Retorno.ok().resultado, r.resultado);
+
+    }
+    
+    @Test
+    public void testListarEsperaEventoVacioOK(){
+        Retorno r = miSistema.listarEsperaEvento();
+            assertEquals("No hay clientes en espera", r.valorString);
+            assertEquals(Retorno.ok().resultado, r.resultado);
+
     }
     
     @Test
     public void testDeshacerUltimasComprasOK(){
-         miSistema.registrarSala("ATI71", 200);
+        miSistema.registrarSala("ATI71", 200);
+        miSistema.registrarSala("BASH2", 200);
          
-         String codigoEvento = "ATI71"; 
+        String codigoEvento = "ATI71"; 
         
         miSistema.registrarEvento(codigoEvento, "Musica de camara", 100, LocalDate.of(2025, 6, 12));
+        miSistema.registrarEvento("CJS23", "Concierto", 100, LocalDate.of(2025, 6, 11));
         miSistema.registrarCliente("58495053", "Sebastian");
         miSistema.registrarCliente("58743973", "Luna");
 
@@ -481,13 +531,14 @@ public class IObligatorioTest {
         miSistema.comprarEntrada("58743973","ATI71");
             
         miSistema.comprarEntrada("47625352", "ATI71");
+        
+        miSistema.comprarEntrada("47625352", "CJS23");
             
         miSistema.comprarEntrada("53428276", "ATI71");
-          
         
-        Retorno r = miSistema.deshacerUltimasCompras(2);
+        Retorno r = miSistema.deshacerUltimasCompras(3);
             assertEquals(Retorno.ok().resultado , r.resultado);
-            assertEquals("ATI71-53428276#ATI71-47625352", r.valorString);
+            assertEquals("ATI71-47625352#ATI71-53428276#CJS23-47625352", r.valorString);
     }
     
     
@@ -840,22 +891,25 @@ public class IObligatorioTest {
     @Test
     public void testEventoMejorPuntuadoOK(){
         miSistema.registrarSala("ATI71", 200);
+        miSistema.registrarSala("ATI80", 300);
         
         String comentario = "Excelente espectaculo";
                 
         
         miSistema.registrarEvento("ATI71", "Musica de camara", 200, LocalDate.of(2025, 6, 12));
-                miSistema.registrarEvento("ZZZ09", "Concierto Jazz Montevideo", 200, LocalDate.of(2025, 7, 12));
-
+        miSistema.registrarEvento("ZZZ09", "Concierto Jazz Montevideo", 200, LocalDate.of(2025, 7, 12));
+        miSistema.registrarEvento("BTZ09", "Concierto Montevideo", 100, LocalDate.of(2025, 7, 11));
+        miSistema.registrarEvento("BTZ10", "Concierto Maldonado", 100, LocalDate.of(2025, 7, 11));
         
         miSistema.registrarCliente("58495053", "Sebastian");
         miSistema.registrarCliente("57295841", "Luna");
-
-  
+        
         miSistema.comprarEntrada("58495053", "ATI71");
         miSistema.comprarEntrada("57295841","ATI71");
         miSistema.comprarEntrada("58495053", "ZZZ09");
         miSistema.comprarEntrada("57295841","ZZZ09");
+        miSistema.comprarEntrada("58495053", "BTZ09");
+        miSistema.comprarEntrada("57295841","BTZ09");
         
         miSistema.calificarEvento("58495053", "ATI71", 10, comentario);
         miSistema.calificarEvento("57295841", "ATI71", 10, comentario);
@@ -863,9 +917,15 @@ public class IObligatorioTest {
         miSistema.calificarEvento("58495053", "ZZZ09", 10, comentario);
         miSistema.calificarEvento("57295841", "ZZZ09", 10, comentario);
         
+        miSistema.calificarEvento("58495053", "BTZ09", 10, comentario);
+        miSistema.calificarEvento("57295841", "BTZ09", 9, comentario);
+        
+        miSistema.calificarEvento("58495053", "BTZ10", 10, comentario);
+        miSistema.calificarEvento("57295841", "BTZ10", 10, comentario);
+        
         Retorno r = miSistema.eventoMejorPuntuado();
             assertEquals(Retorno.Resultado.OK, r.resultado);
-            assertEquals("ATI71-Musica de camara-ATI71#ZZZ09-Concierto Jazz Montevideo-ATI71", r.valorString);
+            assertEquals("ATI71-10#BTZ10-10#ZZZ09-10", r.valorString);
     }
     
     @Test
@@ -896,8 +956,6 @@ public class IObligatorioTest {
             assertEquals(Retorno.Resultado.OK, r.resultado);
             assertEquals("No hay calificaciones", r.valorString);
     }
-    
-    //ComprasXDia Test
     
     @Test
     public void testComprasXDiaOK(){
@@ -936,5 +994,31 @@ public class IObligatorioTest {
         Retorno r = miSistema.comprasXDia(1);
             assertEquals(Retorno.Resultado.OK, r.resultado);
             assertEquals("No hay entradas vendidas para ese mes", r.valorString);
+    }
+    
+    @Test
+    public void testComprasDeClienteOK() {
+        miSistema.registrarSala("Sala1", 100);
+        miSistema.registrarEvento("EVT01", "Evento de prueba", 100, LocalDate.of(2025, 7, 1));
+        miSistema.registrarEvento("EVT02", "Evento de prueba2", 100, LocalDate.of(2025, 7, 2));
+        miSistema.registrarEvento("EVT03", "Evento de prueba3", 100, LocalDate.of(2025, 7, 3));
+
+        miSistema.registrarCliente("12345678", "Juan");
+
+        miSistema.comprarEntrada("12345678", "EVT01");
+        miSistema.comprarEntrada("12345678", "EVT02");
+        miSistema.comprarEntrada("12345678", "EVT03");
+        
+        miSistema.devolverEntrada("12345678", "EVT02");
+        
+        Retorno r = miSistema.comprasDeCliente("12345678");
+        assertEquals(Retorno.Resultado.OK, r.resultado);
+        assertEquals("EVT01-N#EVT02-D#EVT03-N", r.valorString);
+    }
+    
+    @Test
+    public void testComprasDeClienteERROR1(){
+        Retorno r = miSistema.comprasDeCliente("9999999999");
+        assertEquals(Retorno.Resultado.ERROR_1,r.resultado);
     }
 }
