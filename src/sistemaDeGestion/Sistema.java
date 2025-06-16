@@ -241,7 +241,7 @@ public class Sistema implements IObligatorio {
         
         ret.resultado = Retorno.Resultado.OK;
         
-        if(evento.entradas.cantidadElementos() == evento.Aforo){
+        if(evento.cantidadEntradasActivas() == evento.Aforo){
             evento.colaEspera.enqueue(cliente);
             ret.valorString = "Agregado a cola de espera";
         } else {
@@ -254,7 +254,7 @@ public class Sistema implements IObligatorio {
     
     public void asignarEntrada(Cliente cliente, Evento evento){
         Entrada entrada = new Entrada(cliente.Cedula, evento.Codigo);
-        
+
         entradas.agregarFinal(entrada);
         evento.entradas.agregarFinal(entrada);
         cliente.entradas.agregarFinal(entrada);
@@ -266,7 +266,6 @@ public class Sistema implements IObligatorio {
 
     @Override
     public Retorno eliminarEvento(String codigo) {
-        Retorno ret = new Retorno();
         Nodo<Evento> aux = listaEvento.getInicio();
         Evento eventoAEliminar = null;
         
@@ -281,7 +280,7 @@ public class Sistema implements IObligatorio {
             return Retorno.error1();
         }
         
-        if(eventoAEliminar.entradas.cantidadElementos() > 0){
+        if(eventoAEliminar.cantidadEntradasActivas() > 0){
             return Retorno.error2();
         }
         
@@ -418,8 +417,8 @@ public class Sistema implements IObligatorio {
                     String codigo= e.Codigo;
                     String descripcion = e.Descripcion;
                     String sala = e.SalaNombre;
-                    int cantidadEntradasVendidas = e.entradas.cantidadElementos();
-                    int cantidadEntradasDisponibles = e.Aforo - cantidadEntradasVendidas;
+                    int cantidadEntradasVendidas = e.cantidadEntradasActivas();
+                    int cantidadEntradasDisponibles = e.Aforo - e.cantidadEntradasActivas();
 
                     texto += codigo + "-" + descripcion + "-" + sala + "-" + cantidadEntradasDisponibles + "-" + cantidadEntradasVendidas;
 
@@ -560,7 +559,6 @@ public class Sistema implements IObligatorio {
             
             ret.valorString += cliente.toString();
             
-            
             entradasEncontradas++;
         }
         
@@ -573,16 +571,36 @@ public class Sistema implements IObligatorio {
 
     @Override
     public Retorno listarEsperaEvento() {
+        Retorno ret = new Retorno(Retorno.Resultado.OK, "");
         
+        for(int i = 0; i < listaEvento.cantidadElementos(); i++){
+            Evento evento = listaEvento.obtenerElemento(i);
+            
+            if(evento.colaEspera.esVacia())
+                continue;
+            
+            for(int j = 0; j < evento.colaEspera.cantElementos; j++){
+                
+                if(!ret.valorString.isBlank()){
+                    ret.valorString += "#";
+                }
+                
+                ret.valorString += evento.Codigo + "-" +evento.colaEspera.getDatos().obtenerElemento(j).Cedula;
+            }
+        }
         
-        return Retorno.noImplementada();
+        if(ret.valorString.isBlank())
+            ret.valorString = "No hay clientes en espera";
+        
+        return ret;
     }
     
     @Override
     public Retorno deshacerUltimasCompras(int n) {
         Retorno ret = new Retorno(ok().resultado, "");
-                
-        for (int i = 0; i < n; i++) {
+        ListaSimpleNodos<Entrada> eliminadas = new ListaSimpleNodos<>();
+
+        for (int i = 0; eliminadas.cantidadElementos() < n; i++) {            
             Entrada reg = pilaEntrada.pop();
         
             if (reg != null) {
@@ -591,34 +609,36 @@ public class Sistema implements IObligatorio {
                 if(aBorrar == null){
                     continue;
                 }
-                
-                // Asumimos que el evento siempre existe para una entrada activa, 
-                // porque no se permite borrar eventos con entradas asociadas.
+
                 Evento evento = getEvento(aBorrar.codigoEvento);
                 
                 if(aBorrar.estado){
                     aBorrar.estado = false;
+                    eliminadas.agregarOrdenado(reg);
                 
                     cantComprasXMes[evento.Fecha.getMonthValue()-1][evento.Fecha.getDayOfMonth()-1]--;
 
                     asignarSiguienteColaEspera(evento);
-
-                    if(!ret.valorString.isEmpty())
-                        ret.valorString += "#";
-
-                    ret.valorString += reg.codigoEvento + "-" + reg.cedulaCliente;
                 }
             } else {
                 break;
             }
         }
         
-        ret.resultado = Retorno.Resultado.OK;
-        
-        if(ret.valorString.isEmpty()){
-            ret.valorString = "No hay compras";
+        for(int i = 0; i < eliminadas.cantidadElementos(); i++){
+            String codigoEvento = eliminadas.obtenerElemento(i).codigoEvento;
+            String cedula = eliminadas.obtenerElemento(i).cedulaCliente;
+            if(!ret.valorString.isEmpty())
+                        ret.valorString += "#";
+
+            ret.valorString += codigoEvento + "-" + cedula;
         }
         
+        if(ret.valorString.isBlank()){
+            ret.valorString = "No hay compras";                
+        }
+        
+        ret.resultado = Retorno.Resultado.OK;
         
         return ret;
     }
@@ -626,6 +646,8 @@ public class Sistema implements IObligatorio {
     @Override
     public Retorno eventoMejorPuntuado() {
         Retorno ret = new Retorno();
+        
+        ListaSimpleNodos<Evento> eventosMejoresPuntuados = new ListaSimpleNodos();
         int mejorPuntuado = 0;
         
         if(listaEvento.esVacia()){
@@ -643,9 +665,15 @@ public class Sistema implements IObligatorio {
             
             if(promedioCalificacion > mejorPuntuado){ 
 		mejorPuntuado = promedioCalificacion;
-		ret.valorString = evt.toString();
+                
+                eventosMejoresPuntuados.vaciar();
+                eventosMejoresPuntuados.agregarInicio(evt);
+                
+                ret.valorString = evt.Codigo + "-" + promedioCalificacion;
+                
             } else if(promedioCalificacion == mejorPuntuado){
-		ret.valorString += "#" + evt.toString();
+                eventosMejoresPuntuados.agregarOrdenado(evt);
+                ret.valorString += "#"+ evt.Codigo + "-" + promedioCalificacion;
             }
 	}
 		
@@ -659,7 +687,29 @@ public class Sistema implements IObligatorio {
 
     @Override
     public Retorno comprasDeCliente(String cedula) {
-        return Retorno.noImplementada();
+        Retorno ret = new Retorno();
+        Cliente cliente = getCliente(cedula);
+        if (cliente == null) {
+            return Retorno.error1();
+        }
+
+        Nodo<Entrada> actual = cliente.entradas.getInicio();
+        String resultado = "";
+
+        while (actual != null) {
+            Entrada entrada = actual.getDato();
+            if (!resultado.isEmpty()) {
+                resultado += "#";
+            }
+
+            resultado += entrada.codigoEvento + "-" + (entrada.estado ? "N" : "D");
+            actual = actual.getSiguiente();
+        }
+
+        ret.resultado = Retorno.Resultado.OK;
+        ret.valorString = resultado;
+
+        return ret;
     }
 
     @Override

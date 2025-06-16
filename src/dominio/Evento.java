@@ -8,6 +8,8 @@ import java.time.LocalDate;
 import tads.Cola;
 import tads.ListaDobleNodos;
 import tads.ListaSimpleNodos;
+import tads.Nodo;
+import tads.NodoDoble;
 
 /**
  *
@@ -69,7 +71,19 @@ public class Evento implements Comparable<Evento>{
         return (this.Codigo == null ? otro.Codigo == null : this.Codigo.equals(otro.Codigo));
         
     }
-    
-    //TODO sort colaEspera por cedula
+   
+    public int cantidadEntradasActivas(){
+        int contador = 0;
+        NodoDoble<Entrada> actual = entradas.getInicio();
+        
+        while(actual != null){
+            if(actual.getDato().estado){
+                contador++;
+            }
+            actual = actual.getSiguiente();
+        }
+        
+        return contador;
+    }
     
 }

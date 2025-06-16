@@ -25,12 +25,14 @@ public class Entrada implements Comparable<Entrada> {
         this.estado = true;
     }
 
-    @Override
+      @Override
     public int compareTo(Entrada o) {
-        if(o.cedulaCliente == this.cedulaCliente && o.codigoEvento == this.codigoEvento)
-            return 0;
-        else 
-            return -1;
+        int cmp = this.codigoEvento.compareToIgnoreCase(o.codigoEvento);
+        if (cmp != 0) {
+            return cmp;
+        }
+        return this.cedulaCliente.compareToIgnoreCase(o.cedulaCliente);
+
     }
 
     @Override
