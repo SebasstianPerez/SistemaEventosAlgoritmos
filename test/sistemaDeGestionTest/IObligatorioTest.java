@@ -987,6 +987,7 @@ public class IObligatorioTest {
         
         Retorno r = miSistema.comprasXDia(2);
             assertEquals("7-2#10-2#27-2", r.valorString);
+            assertEquals(Retorno.Resultado.OK, r.resultado);
     }
     
     @Test
